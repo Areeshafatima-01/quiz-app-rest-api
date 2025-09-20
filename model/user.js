@@ -27,6 +27,14 @@ const userSchema = mongoose.Schema({
         enum: ["admin", "user"],
         default: "user"
     },
+    otp:{
+type:String,
+default:null
+    },
+    otpExpire:{
+        type:Date,
+        default:null
+    },
     createdAt: {
         type: Date,
         default: Date.now,
@@ -38,7 +46,7 @@ const userSchema = mongoose.Schema({
     status:{
         type:String,
         enum:["active","inactive"],
-        default:"active"
+        default:"inactive"
     },
     profilePicture:{
         type:String,

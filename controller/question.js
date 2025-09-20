@@ -1,7 +1,7 @@
 import Question from "../model/question.js";
 let getQuestion = async (req, res) => {
     try {
-        const question = await Question.find().populate("category");
+        const question = await Question.find().populate("category").populate("userId",["name","email"]);
         if (!question) {
             return res.status(404).json({
                 message: "question  not found",
@@ -25,20 +25,51 @@ let getQuestion = async (req, res) => {
     }
 
 }
+let getQuestionById=async (req,res)=>{
+try{
+   let id=req.params.id;
+    const question=await Question.findById(id)//Products.findById(id) this function will return promice and we will wait for this promice  to get resolved when it is resolved it will store it in product
+  .populate("category")//populate is used to fetch the complete category object instead of just the id
+  .populate("userId",["name","email"])
+  if(!question)
+  {
+    return res.status(404).json({
+        message:"question not found",
+        data:null,
+        error:null,
+    })
+  }
+    {  res.status(200).json(
+    {
+        message:"question fetched successfully",
+        data:question,
+        error:null,
+})
+    }
+}catch(error){
+    res.status(500).json({
+        message:"internal server error",
+        data:null,
+        error:error.message
+})
+
+}
+   
+}
 const createQuestion = async (req, res) => {
-    try {
-        let questionData = req.body;
+    try{
+        let {question,option,correctAnswer,category} = req.body;
      let errors = [];
-        if (!questionData.question) {
+        if (!question) {
             errors.push({ question: "question is required" });
         }
-        if (!questionData.option || questionData.option.length < 4) {
+        if (!option || option.length < 4) {
             errors.push({ option: "four options are required" });
         }
-        if (!questionData.correctAnswer) {
+        if (!correctAnswer) {
             errors.push({ correctAnswer: "correct answer is required" });
         }
-        if (!questionData.category) {
+        if (!category) {
             errors.push({ category: "category is required" });
         }
 
@@ -49,9 +80,11 @@ const createQuestion = async (req, res) => {
                 error: errors
             });
         }
-
-        const question = new Question(questionData)        
-        await question.save()
+        let user=req.user;
+        console.log("user info from token",user);
+        const questions = new Question({question,option,correctAnswer,category,userId:user.id});        
+        await questions.save()
+        console.log(questions)
         res.status(200).json({
             message: "question saved successfully",
             data: question,
@@ -70,19 +103,23 @@ const createQuestion = async (req, res) => {
 let deleteQuestionById = async (req, res) => {
     try {
         const id = req.params.id;
-        let question = await Question.findByIdAndDelete(id)
-        if (!question) {
-            return res.status(404).json({
-                message: "question not found",
-                data: null,
-                error: null
-            })
-        }
-        res.json(
+        let user=req.user;
+        let questions = await Question.deleteOne({
+            _id:id,
+            userId:user.id
+        })
+        if(questions.deletedCount===0){
+    return res.status(200).json({
+        message:"question not found or not owned by user",
+        data:null,
+        error:null
+    })
+}
+      return res.status(200).json(
             {
-                id: id,
-                data: question,
-                title: "something deleted"
+                message:"Question deleted successfully",
+                data: questions,
+               error:null
             }
         )
     }
@@ -97,22 +134,27 @@ let deleteQuestionById = async (req, res) => {
 
 const updateQuestion = async (req, res) => {
     try {
-        const { id } = req.params;
+        let id = req.params.id;
         let questiondata = req.body;
-        const question = await Question.findByIdAndUpdate(
-            id, questiondata, { new: true, }
+        let user=req.user;
+         let userId=user.id;
+        const questions = await Question.findOneAndUpdate({
+  _id:id, 
+  userId:userId},
+  questiondata, { new: true, }
         );
 
-        if (!question) {
+        if (!questions) {
             return res.status(404).json({
                 message: "question not found",
-    
+    data:null,
+    error:null
             });
         }
 
         res.status(200).json({
-            message: "question fetched successfully",
-            data: question,
+            message: "question updated successfully",
+            data: questions,
             error: null
         });
     } catch (error) {
@@ -123,4 +165,4 @@ const updateQuestion = async (req, res) => {
     }
 };
 
-export { getQuestion,createQuestion,deleteQuestionById ,updateQuestion};
+export { getQuestion,getQuestionById,createQuestion,deleteQuestionById ,updateQuestion};

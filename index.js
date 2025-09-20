@@ -1,30 +1,33 @@
 import express from "express"
-const app=express()
+import cors from "cors"
 import dotenv from "dotenv"
 import morgan from "morgan"
+import questionRoutes from "./route/question.js"
+import categoryrRoutes from "./route/category.js"
+import userRoutes from "./route/user.js"
 import dbConnect from "./config/database.js"
-import cors from "cors"
+import {apiRateLimit} from "./middleware/api-limit.js";
+
 var corsOptions={
     origin:process.env.WEBAPP_URL,
     optionsSuccessStatus:200
 }
+
 dotenv.config()
-app.use(cors(corsOptions))
-app.use(morgan("common")) //middleware for loading http request
+const app=express() //middleware for loading http request
+app.use(cors())
+app.use(morgan("common"))
 app.use(express.json())
 app.use(morgan("dev"))
-import categoryrRoutes from "./route/category.js"
 app.use("/api/categories",categoryrRoutes)
-import questionRoutes from "./route/question.js"
 app.use("/api/questions",questionRoutes)
-import userRoutes from "./route/user.js"
-app.use("/api/auth/",userRoutes)
+app.use("/api/auth/",apiRateLimit,userRoutes)
 dbConnect()
 
 
 
-const port=process.env.PORT || 5000; //port number from environment variable or default 
-const host=process.env.HOST || "localhost" //Host name from environment variable or default 
+const port=process.env.PORT || 3000; //port number from environment variable or default 
+const host=process.env.HOST || "127.0.0.1" //Host name from environment variable or default 
 app.listen(port,host,()=>{
-    console.log(`Server is running on ${port}`)
+    console.log(`Server is running on ${port} and ${host}`)
 })

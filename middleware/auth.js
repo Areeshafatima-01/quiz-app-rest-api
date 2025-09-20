@@ -30,4 +30,15 @@ let token = req.headers.authorization;
 }
 
 }
-export default verifyToken;
+
+const verifyAdmin=(req,res,next)=>{
+    if(req.user.role!=="admin"){
+        return res.status(403).json({
+            message:"Access denied,admin only",
+            data:null,
+            error:["You do not have permission to access this resource"]
+        })
+    }
+    next()
+}
+export {verifyAdmin,verifyToken};

@@ -3,6 +3,9 @@ import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv"
 dotenv.config();
+import sendEmail from "../utils/send-mail.js";
+
+
 let signUpUser = async (req, res) => {
 
     try {
@@ -48,7 +51,10 @@ let signUpUser = async (req, res) => {
                     error: error.message
                 });
             }
-            const user = new User({ name, email, password: hash })
+            const otp=(Math.floor(100000+Math.random()*900000));//generate 6 digit otp
+            const otpExpire=Date.now()+10*60*1000;//set otp expiration time to 10 min
+            sendEmail(email,"verify your email",`your otp is ${otp}`)
+            const user = new User({ name, email, password: hash,otp,otpExpire})
             await user.save()
             let tempUser = {
                 name: user.name,
@@ -93,7 +99,14 @@ let loginUser = async (req, res) => {
                 ]
             })
         }
-        let token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+        if(user.status==="inactive"){
+           return res.status(403).json({
+            message:"Account is inactive",
+            data:null,
+            error:["please verify your email"]
+           })
+        }
+        let token = jwt.sign({ id: user._id ,role:user.role}, process.env.JWT_SECRET, {
             expiresIn: process.env.JWT_EXPIRES_IN,
         })
         res.status(200).json({
@@ -103,14 +116,7 @@ let loginUser = async (req, res) => {
                 user: {
                     name: user.name,
                     email: user.email,
-                    // role: user.role,
-                    // createdAt: user.createdAt,
-                    // updatedAt: user.updatedAt,
-                    // id: user._id,
-                    // profilepicture: user.profilePicture,
-                    // address: user.address,
-                    // phone: user.phone,
-                    // status: user.status
+                     role: user.role,
                 }
             },
             error: null
@@ -254,7 +260,7 @@ let deleteUserById = async (req, res) => {
 
 let getUserById = async (req, res) => {
     try {
-        let id = req.params.id;
+        let id = req.user.id;
         const user = await User.findById(id)//Products.findById(id) this function will return promice and we will wait for this promice  to get resolved when it is resolved it will store it in product
 
         if (!user) {
