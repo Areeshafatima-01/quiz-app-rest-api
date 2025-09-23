@@ -1,19 +1,17 @@
 import express from "express"
 import cors from "cors"
-import dotenv from "dotenv"
 import morgan from "morgan"
 import questionRoutes from "./route/question.js"
 import categoryrRoutes from "./route/category.js"
 import userRoutes from "./route/user.js"
 import dbConnect from "./config/database.js"
 import {apiRateLimit} from "./middleware/api-limit.js";
-
+import config from "./config/config.js"
 var corsOptions={
-    origin:process.env.WEBAPP_URL,
+    origin:config.webAppUrl,
     optionsSuccessStatus:200
 }
 
-dotenv.config()
 const app=express() //middleware for loading http request
 app.use(cors())
 app.use(morgan("common"))
@@ -26,8 +24,8 @@ dbConnect()
 
 
 
-const port=process.env.PORT || 3000; //port number from environment variable or default 
-const host=process.env.HOST || "127.0.0.1" //Host name from environment variable or default 
+const port=config.port || 5000; //port number from environment variable or default 
+const host=config.host || "localhost" //Host name from environment variable or default 
 app.listen(port,host,()=>{
     console.log(`Server is running on ${port} and ${host}`)
 })

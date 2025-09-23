@@ -1,4 +1,6 @@
 import nodemailer from "nodemailer"
+import hbs from 'nodemailer-express-handlebars';
+import path from "path";
 import dotenv from "dotenv"
 dotenv.config()
 
@@ -10,13 +12,30 @@ var transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASSWORD
   }
 });
-const sendEmail= async (to,subject,text)=>{
+
+
+const handlebarOptions = {
+    viewEngine: {
+        partialsDir: path.resolve('./views/'),
+        defaultLayout: false,
+    },
+    viewPath: path.resolve('./views/'),
+};
+
+// use a template file with nodemailer
+transporter.use('compile', hbs(handlebarOptions))
+
+const sendEmail= async(to,subject,text)=>{
     try{
          const info = await transporter.sendMail({
     from: process.env.EMAIL_FROM,
     to: to,
     subject: subject,
-    text: text, // plain‑text body
+   // text: text, // plain‑text body
+    template:"email",
+    context:{
+      otp:text
+    }
     // html: "<b>Hello world?</b>", // HTML body
   });
   console.log("email sent", info.response)

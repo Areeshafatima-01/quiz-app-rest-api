@@ -53,7 +53,8 @@ let signUpUser = async (req, res) => {
             }
             const otp=(Math.floor(100000+Math.random()*900000));//generate 6 digit otp
             const otpExpire=Date.now()+10*60*1000;//set otp expiration time to 10 min
-            sendEmail(email,"verify your email",`your otp is ${otp}`)
+           // sendEmail(email,"verify your email",`your otp is ${otp}`)
+           sendEmail(email,"verify your email",otp)
             const user = new User({ name, email, password: hash,otp,otpExpire})
             await user.save()
             let tempUser = {

@@ -46,7 +46,7 @@ default:null
     status:{
         type:String,
         enum:["active","inactive"],
-        default:"inactive"
+        default:"active"
     },
     profilePicture:{
         type:String,
